@@ -1,0 +1,64 @@
+import mongoose from "mongoose";
+
+// const segmentSchema = new mongoose.Schema(
+//   {
+//     speaker: { type: String, default: null },
+//     start: { type: Number },
+//     end: { type: Number },
+//     text: { type: String },
+//   },
+//   { _id: false }
+// );
+
+// const actionSchema = new mongoose.Schema(
+//   {
+//     text: { type: String, required: true },
+//     suggestedAssigneeName: { type: String, default: null },
+//     dueDate: { type: Date, default: null },
+//     priority: {
+//       type: String,
+//       enum: ["Low", "Medium", "High"],
+//       default: "Medium",
+//     },
+//     confidence: { type: Number, default: 0 }, // 0..1
+//   },
+//   { _id: false }
+// );
+
+// const transcriptSchema = new mongoose.Schema(
+//   {
+//     meetingCauptureId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "MeetingCapture",
+//       required: true,
+//       unique: true,
+//     },
+//     rawText: {
+//       type: String,
+//     },
+//     segments: [segmentSchema],
+//     participantsExtracted: [String], // names extracted from speech
+//     provider: { type: String },
+//     actions: [actionSchema],
+//   },
+//   { timestamps: true }
+// );
+
+const transcriptSchema = new mongoose.Schema(
+  {
+    userId: { type: String, required: true }, // who uploaded
+    fileName: { type: String, required: true }, // Supabase file name
+    transcriptText: { type: String, default: "" }, // result text
+    status: {
+      type: String,
+      enum: ["pending", "completed", "failed"],
+      default: "pending",
+    },
+    error: { type: String, default: "" },
+  },
+  { timestamps: true }
+);
+
+const Transcript = mongoose.model("Transcript", transcriptSchema);
+
+export { Transcript };
