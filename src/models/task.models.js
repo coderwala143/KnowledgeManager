@@ -3,28 +3,26 @@ import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    transcriptId: { type: mongoose.Schema.Types.ObjectId, ref: "Transcript" },
     title: { type: String, required: true },
-    description: { type: String, default: "" },
-    //   reporterId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    //   assigneeId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-    reporterName: { type: String, required: true },
-    assigneeName: { type: String, default: null },
+    description: String,
     status: {
       type: String,
-      enum: ["suggested", "todo", "in_progress", "done"],
-      default: "suggested",
+      enum: ["todo", "in_progress", "done"],
+      default: "todo",
     },
-    dueDate: { type: Date, default: null },
     priority: {
       type: String,
-      enum: ["Low", "Medium", "High"],
-      default: "Medium",
+      enum: ["low", "medium", "high"],
+      default: "medium",
     },
-    source: { type: String, default: "meeting" },
-    meetingCaptureId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "MeetingCapture",
-    },
+    dueDate: Date,
+    assignedTo: { type: String }, // optionally extracted from text (“Ravi to fix bug”)
   },
   { timestamps: true }
 );

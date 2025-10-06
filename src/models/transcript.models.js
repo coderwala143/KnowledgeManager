@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 // const segmentSchema = new mongoose.Schema(
 //   {
@@ -46,7 +46,7 @@ import mongoose from "mongoose";
 
 const transcriptSchema = new mongoose.Schema(
   {
-    userId: { type: String, required: true }, // who uploaded
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // who uploaded
     fileName: { type: String, required: true }, // Supabase file name
     transcriptText: { type: String, default: "" }, // result text
     status: {
@@ -54,7 +54,15 @@ const transcriptSchema = new mongoose.Schema(
       enum: ["pending", "completed", "failed"],
       default: "pending",
     },
-    error: { type: String, default: "" },
+    notes: {
+      summary: String,
+      keyPoints: [String],
+      actionItems: [String],
+    },
+    notesCreated: { type: Boolean, default: false },
+    externalProvider: { type: String, default: "assemblyai" },
+    externalId: { type: String }, // id from external provider
+    errorMessage: { type: String, default: "" },
   },
   { timestamps: true }
 );

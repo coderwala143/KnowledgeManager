@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes.js";
 import audioRoutes from "./routes/audio.routes.js";
 import transcriptionRoutes from "./routes/transcription.routes.js";
+import taskRoutes from "./routes/task.routes.js";
 
 dotenv.config();
 const app = express();
@@ -32,7 +33,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1/auth", authRoutes)
 app.use('/api/v1/audio', audioRoutes);
-app.use('/api/v1/transcriptions', transcriptionRoutes)
+app.use('/api/v1/transcription', transcriptionRoutes)
+app.use('/api/v1/task', taskRoutes);
 
 app.use((err, req, res, next) => {
     res.status(err.statusCode || 500).json({
