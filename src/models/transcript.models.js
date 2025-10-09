@@ -46,7 +46,10 @@ import mongoose, { mongo } from "mongoose";
 
 const transcriptSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // who uploaded
+    userId: {
+      type: String,
+      required: true,
+    }, // who uploaded
     fileName: { type: String, required: true }, // Supabase file name
     transcriptText: { type: String, default: "" }, // result text
     status: {
@@ -66,6 +69,27 @@ const transcriptSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// const taskSchema = new mongoose.Schema(
+//   {
+//     userId: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "User",
+//       required: true,
+//     },
+//     transcriptId: { type: mongoose.Schema.Types.ObjectId, ref: "Transcript" },
+//     assignedPersons: [
+//         {
+//             name: { type: String, required: true },
+//             email: { type: String },
+//             taskName: { type: String, required: true },
+//             dueDate: { type: Date },
+//             priority: { type: String, enum: ["Low", "Medium", "High"], default: "Medium"   } 
+//         }
+//     ]
+//   },
+//   { timestamps: true }
+// );
 
 const Transcript = mongoose.model("Transcript", transcriptSchema);
 

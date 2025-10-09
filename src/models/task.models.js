@@ -22,7 +22,11 @@ const taskSchema = new mongoose.Schema(
       default: "medium",
     },
     dueDate: Date,
-    assignedTo: { type: String }, // optionally extracted from text (“Ravi to fix bug”)
+    assignedTo: [
+        {
+            type: String
+        }
+     ], // optionally extracted from text (“Ravi to fix bug”)
   },
   { timestamps: true }
 );

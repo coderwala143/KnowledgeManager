@@ -9,7 +9,10 @@ import { generateMeetingNotes } from "../services/note.services.js";
 const ASSEMBLYAI_KEY = process.env.ASSEMBLYAI_API_KEY;
 
 const createTranscription = asyncHandler(async (req, res) => {
-  const { transcriptId } = req.body;
+  //   const { transcriptId } = req.body;
+  // const transcriptId = req.body;
+  console.log("Request body in createTranscription - ", req.transcriptId);
+  const transcriptId = req.transcriptId;
   if (!transcriptId) {
     throw new ApiError(400, "transcriptId required");
   }
@@ -122,14 +125,16 @@ const getTranscript = asyncHandler(async (req, res) => {
 });
 const getAllTranscripts = asyncHandler(async (req, res) => {
   const transcripts = await Transcript.find().populate("userId");
-  console.log(transcripts)
-  if(!transcripts || transcripts.length === 0){
+  console.log(transcripts);
+  if (!transcripts || transcripts.length === 0) {
     throw new ApiError(404, "No transcripts found");
   }
 
-  res.status(200).json(
-    new ApiResponse(200, transcripts, "All transcripts fetched successfully")
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, transcripts, "All transcripts fetched successfully")
+    );
 });
 
 export { createTranscription, getTranscript, getAllTranscripts };
