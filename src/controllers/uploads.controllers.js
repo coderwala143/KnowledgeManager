@@ -1,7 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
-import { supabase } from "../supabaseClient.js";
+import { supabase } from "../utils/supabaseClient.js";
 import { Transcript } from "../models/transcript.models.js";
 import { uploadAudioOfMeeting } from "../services/uploadAudioOfMeeting.services.js";
 
@@ -19,6 +19,7 @@ const uploadFiles = asyncHandler(async (req, res, next) => {
   if (fileType === "audio") {
     const { fileUrl: uploadedUrl, fileName: uploadedName } =
       await uploadAudioOfMeeting(req.file);
+      console.log("step six");
     fileUrl = uploadedUrl;
     fileName = uploadedName;
   } else if (fileType === "application") {

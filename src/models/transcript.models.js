@@ -48,10 +48,11 @@ const transcriptSchema = new mongoose.Schema(
   {
     userId: {
       type: String,
-      required: true,
+      required: false,
     }, // who uploaded
     fileName: { type: String, required: true }, // Supabase file name
     transcriptText: { type: String, default: "" }, // result text
+    transcriptTitle: { type: String, default: "" },
     status: {
       type: String,
       enum: ["pending", "completed", "failed"],
@@ -60,7 +61,7 @@ const transcriptSchema = new mongoose.Schema(
     notes: {
       summary: String,
       keyPoints: [String],
-      actionItems: [String],
+      actionItems: [],
     },
     notesCreated: { type: Boolean, default: false },
     externalProvider: { type: String, default: "assemblyai" },

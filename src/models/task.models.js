@@ -6,27 +6,20 @@ const taskSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     },
     transcriptId: { type: mongoose.Schema.Types.ObjectId, ref: "Transcript" },
-    title: { type: String, required: true },
-    description: String,
+    owner: { type: String }, // extracted from action item
+    taskTitle: { type: String }, // extracted from action item
+    task: [String], // extracted from action item
+    priority: { type: String }, // extracted from action item
+    dueDate: { type: String, default: null }, // extracted from action item
     status: {
       type: String,
       enum: ["todo", "in_progress", "done"],
       default: "todo",
     },
-    priority: {
-      type: String,
-      enum: ["low", "medium", "high"],
-      default: "medium",
-    },
-    dueDate: Date,
-    assignedTo: [
-        {
-            type: String
-        }
-     ], // optionally extracted from text (“Ravi to fix bug”)
+      
   },
   { timestamps: true }
 );

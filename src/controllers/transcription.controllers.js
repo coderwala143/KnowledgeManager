@@ -3,8 +3,10 @@ import { Transcript } from "../models/transcript.models.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import { supabase } from "../supabaseClient.js";
+import { supabase } from "../utils/supabaseClient.js";
 import { generateMeetingNotes } from "../services/note.services.js";
+import { generateTasksFromNotes } from "../services/task.services.js";
+import { Task } from "../models/task.models.js";
 
 const ASSEMBLYAI_KEY = process.env.ASSEMBLYAI_API_KEY;
 
@@ -81,16 +83,22 @@ const createTranscription = asyncHandler(async (req, res) => {
     }
   }
   // 5. Save transcript
+  console.log("Transcription completed: ", transcriptText);
   transcript.transcriptText = transcriptText;
   transcript.status = "completed";
   const notes = await generateMeetingNotes(transcriptText);
+  transcript.transcriptTitle = notes.title;
+  console.log("Generated Notes: ", notes);
   transcript.notes = notes;
   transcript.notesCreated = true;
   await transcript.save();
+  // Generate tasks from notes
+  const tasksData = await generateTasksFromNotes(transcript);
+
 
   res
     .status(200)
-    .json(new ApiResponse(200, transcript, "Transcription completed"));
+    .json(new ApiResponse(200, {transcript, tasksData}, "Transcription completed"));
 });
 
 const getTranscript = asyncHandler(async (req, res) => {
