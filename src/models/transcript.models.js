@@ -61,7 +61,6 @@ const transcriptSchema = new mongoose.Schema(
     notes: {
       summary: String,
       keyPoints: [String],
-      actionItems: [],
     },
     notesCreated: { type: Boolean, default: false },
     externalProvider: { type: String, default: "assemblyai" },

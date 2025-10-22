@@ -4,13 +4,12 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { supabase } from "../utils/supabaseClient.js";
-import { generateMeetingNotes } from "../services/note.services.js";
+import { generateMeetingNotes } from "../services/meetingNote.services.js";
 import { generateTasksFromNotes } from "../services/task.services.js";
 import { Task } from "../models/task.models.js";
+import { extractTranscript } from "../utils/extractTranscriptFromAudio.js";
 
-const ASSEMBLYAI_KEY = process.env.ASSEMBLYAI_API_KEY;
-
-const createTranscription = asyncHandler(async (req, res) => {
+const createTranscript = asyncHandler(async (req, res) => {
   //   const { transcriptId } = req.body;
   // const transcriptId = req.body;
   console.log("Request body in createTranscription - ", req.transcriptId);
@@ -36,69 +35,35 @@ const createTranscription = asyncHandler(async (req, res) => {
   if (!fileName) {
     throw new ApiError(400, "No file associated with this transcript");
   }
-
-  const { data: signedData, error: signedError } = await supabase.storage
-    .from("meeting-audio")
-    .createSignedUrl(fileName, 60 * 60);
-
-  if (signedError) {
-    throw new ApiError(500, "Error generating signed URL", [
-      signedError.message,
-    ]);
-  }
-
-  const audioUrl = signedData.signedUrl;
-
-  const assemblyResponse = await axios.post(
-    "https://api.assemblyai.com/v2/transcript",
-    { audio_url: audioUrl },
-    { headers: { authorization: ASSEMBLYAI_KEY } }
-  );
-
-  const transcriptedId = assemblyResponse.data.id;
-
-  // 4. Poll until transcription is complete
-  let completed = false;
   let transcriptText = "";
-  while (!completed) {
-    const checkResponse = await axios.get(
-      `https://api.assemblyai.com/v2/transcript/${transcriptedId}`,
-      { headers: { authorization: ASSEMBLYAI_KEY } }
-    );
-
-    const status = checkResponse.data.status;
-    if (status === "completed") {
-      completed = true;
-      transcriptText = checkResponse.data.text;
-    } else if (status === "failed") {
-      completed = true;
-      transcript.status = "failed";
-      transcript.errorMessage = "Transcription failed";
-
-      await transcript.save();
-      return res.status(500).json({ error: "Transcription failed" });
-    } else {
-      // wait 2 seconds before next poll
-      await new Promise((r) => setTimeout(r, 2000));
-    }
+  transcriptText = req.transcriptText;
+  const fileExtension = fileName.split(".")[1]
+  if (fileExtension === "mp3" || fileExtension === "wav" || fileExtension === 'ogg') {
+    transcriptText = await extractTranscript(fileName, transcript);
   }
+
   // 5. Save transcript
   console.log("Transcription completed: ", transcriptText);
   transcript.transcriptText = transcriptText;
   transcript.status = "completed";
-  const notes = await generateMeetingNotes(transcriptText);
+  const notes = await generateMeetingNotes(transcriptText, req.date);
   transcript.transcriptTitle = notes.title;
-  console.log("Generated Notes: ", notes);
-  transcript.notes = notes;
+  //   console.log("Generated Notes: ", notes);
+  let extractedNotes = {
+    summary: notes.summary,
+    keyPoints: notes.keyPoints,
+  };
+  transcript.notes = extractedNotes;
   transcript.notesCreated = true;
   await transcript.save();
   // Generate tasks from notes
-  const tasksData = await generateTasksFromNotes(transcript);
-
+  const tasksData = await generateTasksFromNotes(transcript, notes.actionItems);
 
   res
     .status(200)
-    .json(new ApiResponse(200, {transcript, tasksData}, "Transcription completed"));
+    .json(
+      new ApiResponse(200, { transcript, tasksData }, "Transcription completed")
+    );
 });
 
 const getTranscript = asyncHandler(async (req, res) => {
@@ -131,18 +96,45 @@ const getTranscript = asyncHandler(async (req, res) => {
     )
   );
 });
-const getAllTranscripts = asyncHandler(async (req, res) => {
-  const transcripts = await Transcript.find().populate("userId");
-  console.log(transcripts);
-  if (!transcripts || transcripts.length === 0) {
-    throw new ApiError(404, "No transcripts found");
-  }
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(200, transcripts, "All transcripts fetched successfully")
-    );
+const getRecentTranscripts = asyncHandler(async (req, res) => {
+  let { limit, sort, page } = req.query;
+
+  // Convert query params to numbers or set defaults
+  const pageNum = Number(page) > 0 ? Number(page) : 1;
+  const limitNum = Number(limit) > 0 ? Number(limit) : 5;
+  const sortOrder = sort === "asc" ? 1 : -1; // default: newest first
+
+  // Calculate how many documents to skip
+  const skip = (pageNum - 1) * limitNum;
+
+  // Fetch data
+  const transcripts = await Transcript.find()
+    .sort({ createdAt: sortOrder })
+    .skip(skip)
+    .limit(limitNum);
+
+  // Count total documents for pagination info
+  const total = await Transcript.countDocuments();
+
+  const totalPages = Math.ceil(total / limitNum);
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        transcripts,
+        pagination: {
+          total,
+          totalPages,
+          currentPage: pageNum,
+          hasNextPage: pageNum < totalPages,
+          hasPrevPage: pageNum > 1,
+        },
+      },
+      "Recent transcripts fetched successfully."
+    )
+  );
 });
 
-export { createTranscription, getTranscript, getAllTranscripts };
+export { createTranscript, getTranscript, getRecentTranscripts };

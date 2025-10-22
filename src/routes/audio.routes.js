@@ -2,10 +2,10 @@ import express from "express";
 
 import { uploadFiles } from "../controllers/uploads.controllers.js";
 import upload from "../utils/audioMulter.js";
-import { createTranscription } from "../controllers/transcription.controllers.js";
+import { createTranscript } from "../controllers/transcription.controllers.js";
 
 const router = express.Router();
 
-router.post("/upload-audio", upload.single("audio"), uploadFiles, createTranscription);
+router.post("/file", upload.single("file"), uploadFiles, createTranscript);
 
 export default router;

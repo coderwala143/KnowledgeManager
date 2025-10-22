@@ -3,7 +3,10 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import { supabase } from "../utils/supabaseClient.js";
 import { Transcript } from "../models/transcript.models.js";
-import { uploadAudioOfMeeting } from "../services/uploadAudioOfMeeting.services.js";
+import {
+  uploadAudioOfMeeting,
+  uploadTranscriptOfMeeting,
+} from "../services/uploadAudioOfMeeting.services.js";
 
 const uploadFiles = asyncHandler(async (req, res, next) => {
   if (!req.file) {
@@ -13,20 +16,21 @@ const uploadFiles = asyncHandler(async (req, res, next) => {
   const [fileType] = req.file.mimetype.split("/");
 
   let fileUrl,
-    fileName = "";
+    fileName = "",
+    transcriptText = "";
 
   // Upload based on file type
   if (fileType === "audio") {
     const { fileUrl: uploadedUrl, fileName: uploadedName } =
       await uploadAudioOfMeeting(req.file);
-      console.log("step six");
+    console.log("step six");
     fileUrl = uploadedUrl;
     fileName = uploadedName;
   } else if (fileType === "application") {
-    const { fileUrl: uploadedUrl, fileName: uploadedName } =
-      await uploadDocument(req.file);
-    fileUrl = uploadedUrl;
+    const { fileName: uploadedName, transcriptText: transcriptedText } =
+      await uploadTranscriptOfMeeting(req.file);
     fileName = uploadedName;
+    transcriptText = transcriptedText;
   } else {
     throw new ApiError(400, "Unsupported file type");
   }
@@ -38,20 +42,18 @@ const uploadFiles = asyncHandler(async (req, res, next) => {
   });
   console.log("Transcript record created: ", transcript);
 
-  // res.status(200).json(
-  //   new ApiResponse(
-  //     200,
-  //     {
-  //       fileUrl: signedUrl,
-  //       transcriptId: transcript._id,
-  //     },
-  //     "File uploaded successfully"
-  //   )
-  // );
-  req.transcriptId = transcript._id;
-  req.fileUrl = fileUrl;
-  req.fileType = fileType;
-  next();
+  if (transcriptText.trim()) {
+    req.transcriptId = transcript._id;
+    req.transcriptText = transcriptText;
+    req.date = req.body.meetingDate;
+    next();
+  } else{ 
+    req.transcriptId = transcript._id;
+    req.fileUrl = fileUrl;
+    req.fileType = fileType;
+    req.date = req.body.meetingDate;
+    next();
+  }
 });
 
 export { uploadFiles };

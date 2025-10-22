@@ -1,7 +1,7 @@
 import { Task } from "../models/task.models.js";
 import { Transcript } from "../models/transcript.models.js";
 
-const generateTasksFromNotes = async (transcript) => {
+const generateTasksFromNotes = async (transcript, notes) => {
   if (!transcript) {
     return {
       taskCreated: false,
@@ -24,31 +24,14 @@ const generateTasksFromNotes = async (transcript) => {
       status: 409,
     };
   }
-
-  if (!transcript || transcript.notes?.actionItems?.length === 0) {
-    return {
-      taskCreated: false,
-      message: "No action items found in notes",
-      status: 400,
-    };
-  }
-
-  const tasks = [];
-  for (const item of transcript.notes.actionItems) {
-    const task = new Task({
-      userId: transcript.userId,
-      transcriptId: transcript._id,
-      owner: item.owner,
-      title: item.taskTitle,
-      description: item.task.join(" "),
-      task: item.task,
-      priority: item.Priority || "medium",
-      dueDate: item.DueDate,
-    });
-    await task.save();
-    tasks.push(task);
-  }
-  return tasks;
+  const newTask = new Task({
+    userId: transcript.userId,
+    transcriptId: transcript._id,
+    transcriptTitle: transcript.transcriptTitle,
+    actionItems: notes,
+  });
+  await newTask.save();
+  return newTask;
 };
 
 export { generateTasksFromNotes };
